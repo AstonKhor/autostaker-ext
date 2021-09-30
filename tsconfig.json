@@ -1,0 +1,18 @@
+{
+    "exclude": ["./node_modules/"],
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "lib": ["es6", "dom"],
+        "module": "es6",
+        "moduleResolution": "node",
+        "target": "es5",
+        "allowJs": true,
+        "jsx": "react",
+        "allowSyntheticDefaultImports": true,
+    },
+    "include": [
+        "./src/**/*",
+    ]
+}
