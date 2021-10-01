@@ -3,8 +3,9 @@ html body {
   width: 357px;
 }
 
-.App {
+#app, #popup {
   text-align: center;
+  height: 100%;
 }
 
 #header {
@@ -13,6 +14,15 @@ html body {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+
+#content {
+  height: 100%;
+}
+
+#autostaker {
+  height: 100%;
+  background: white;
 }
 
 .small-icon {

@@ -12,7 +12,7 @@ const config = {
   contractExecDelay: 15,
   mnemonicIndex: 0,
   coinType: 330,
-  gas: 0.15,
+  gas: 0.30,
   lcdUrl: 'https://lcd.terra.dev',
 }
 const state = {
@@ -25,7 +25,6 @@ function init() {
   setupLocalState();
   setupStorageListeners();
   setupMessageListeners();
-  // startAutoStakerProcess();
 }
 
 function setupLocalState() {
@@ -47,11 +46,18 @@ function setupStorageListeners() {
 }
 
 function setupMessageListeners() {
-  chrome.runtime.onMessage.addListener(function (message: Object) {
-    console.log(message);
+  chrome.runtime.onMessage.addListener(function (message: chromeMessage) {
+    if (message.type === 'autostaker on') {
+      console.log('Enable Staking Process');
+      startAutoStakerProcess();
+    } else if (message.type === 'autostaker off') {
+      console.log('Disable Staking Process');
+      clearAutoStakerProcess();
+    }
   });
 }
 
+// convert to web workers eventually
 function startAutoStakerProcess() {
   if (state.currentStakerProcess) return;
   state.autoStaker = new AutoStaker(config);

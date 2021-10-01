@@ -1,5 +1,4 @@
 import React from 'react';
-import Panel from './components/Panel';
 import SetupPage from './components/SetupPage';
 import ConfigPage from './components/ConfigPage';
 import AutostakerPage from './components/AutostakerPage';
@@ -12,21 +11,48 @@ class App extends React.Component <{}, MyState>{
     this.state = {
       page: 'setupPage',
       seedPhrase: '',
-      targetAsset: '',
+      targetAsset: 'mETH',
       checkInterval: 60,
       contractExecDelay: 15,
       mnemonicIndex: 0,
       coinType: 330,
-      gas: 0.15,
+      gas: 0.30,
       lcdUrl: 'https://lcd.terra.dev',
+      stakerOn: false,
     };
     this.changePage = this.changePage.bind(this);
+    this.updateSeed = this.updateSeed.bind(this);
+    this.toggleStakerOn = this.toggleStakerOn.bind(this);
   }
 
   componentDidMount() {
-    chrome.storage.local.get([ 'seedPhrase', 'targetAsset', 'checkInterval', 'contractExecDelay', 'mnemonicIndex', 'coinType', 'gasUsage', 'lcdUrl' ], (storage: MyState) => {
+    chrome.storage.local.get([ 'seedPhrase', 'targetAsset', 'checkInterval', 'contractExecDelay', 'mnemonicIndex', 'coinType', 'gasUsage', 'lcdUrl', 'stakerOn' ], (storage: MyState) => {
+      if (typeof storage.seedPhrase === 'string' && storage.seedPhrase) storage.page = 'autostakerPage';
       this.setState(storage);
-    })
+    });
+  }
+
+  async componentDidUpdate() {
+    return new Promise((resolve) => {
+      chrome.storage.local.set(this.state, () => {
+        resolve(null);
+      });
+    });
+  }
+
+  updateSeed(seedPhrase) {
+    this.setState({ seedPhrase });
+  }
+  
+  toggleStakerOn() {
+    this.setState({ stakerOn: !this.state.stakerOn }, () => {
+      // send message to bg to start or stop autostaker
+      if (this.state.stakerOn) {
+        chrome.runtime.sendMessage({ type: 'autostaker on' });
+      } else {
+        chrome.runtime.sendMessage({ type: 'autostaker off' });
+      }
+    });
   }
 
   changePage(page:string) {
@@ -35,10 +61,10 @@ class App extends React.Component <{}, MyState>{
 
   render() {
     return (
-      <div className='App'>
+      <div id='app'>
         <div id='header'>
           {/* icon */}
-          <div className="small-icon"></div>
+          <div className="small-icon" onClick={() => { this.changePage('autostakerPage'); }}></div>
           <div>
             <span className="dot"></span>
             <select name="networks" id="networks">
@@ -52,12 +78,13 @@ class App extends React.Component <{}, MyState>{
           </div>
           {/* settings hamburger */}
         </div>
-        <div className='content'>
+        <div id='content'>
           { this.state.page === 'setupPage' && <SetupPage 
             changePage={this.changePage}
+            updateSeed={this.updateSeed}
           /> }
           { this.state.page === 'configPage' && <ConfigPage 
-            onSeedUpdate={() => {}} 
+            onSeedUpdate={this.updateSeed} 
             seedPhrase={this.state.seedPhrase} 
             targetAsset= {this.state.targetAsset} 
             checkInterval={this.state.checkInterval} 
@@ -67,10 +94,12 @@ class App extends React.Component <{}, MyState>{
             gas={this.state.gas}
             lcdUrl={this.state.lcdUrl}
           /> }
-          { this.state.page === 'autostakerPage' && <AutostakerPage /> }
+          { this.state.page === 'autostakerPage' && <AutostakerPage 
+            changePage={this.changePage}
+            toggleStakerOn={this.toggleStakerOn}
+            stakerOn={this.state.stakerOn}
+          /> }
         </div>
-        {/* <button onClick={() => { this.changePage('configPage') }}></button> */}
-        <Panel />
       </div>
     );
   }

@@ -6,7 +6,8 @@ function SetupPage(props:SetupProps) {
     seed = e.target.value;
   }
   function checkSubmit() {
-    if (seed.split(' ').length !== 20) {
+    if (seed.split(' ').length !== 24) {
+      console.log(seed.split(' ').length);
       let warn = document.querySelector('.caveat');
       warn.id = 'caveat-warn';
       warn.textContent = 'invalid seed phrase';
@@ -18,6 +19,7 @@ function SetupPage(props:SetupProps) {
     }
     // props.updateSeed();
     props.changePage('autostakerPage');
+    props.updateSeed(seed);
   }
 
   return (

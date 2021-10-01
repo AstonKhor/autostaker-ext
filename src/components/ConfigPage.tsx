@@ -1,59 +1,51 @@
 import React from 'react';
+import '../ConfigPage.css';
 
-function ConfigPage({ onSeedUpdate, seedPhrase, targetAsset, checkInterval, contractExecDelay, mnemonicIndex, coinType, gas, lcdUrl}:ConfigProps) {
+function ConfigPage(props:ConfigProps) {
+
+  function validateInputs() {
+    // let seedPhrase = document.querySelector()
+
+
+  }
 
   return (
-    <div>
-      <form onSubmit={onSeedUpdate}>
+    <div id="config">
+      <form id="config-form" onSubmit={validateInputs}>
         {/* by default mnemonic phrase is hidden till you temp toggle it */}
-        <label>
-          Mnuemonic Seed Phrase
-          <input type="text" name="seedPhrase" value={seedPhrase}></input>
-        </label>
-        <label>
-          Target Asset
-          <input type="text" name="targetAsset" value={targetAsset}></input>
-        </label>
-        <label>
-          Check Interval (Minutes)
-          <input type="text" name="checkInterval" value={checkInterval}></input>
-        </label>
-        <label>
-          Contract Exec Delay (Seconds)
-          <input type="text" name="contractExecDelay" value={contractExecDelay}></input>
-        </label>
-        <label>
-          Mnemonic Index
-          <input type="text" name="mnemonicIndex" value={mnemonicIndex}></input>
-        </label>
-        <label>
-          COIN TYPE
-          <input type="text" name="coinType" value={coinType}></input>
-        </label>
-        <label>
-          Gas Usage (UST)
-          <input type="text" name="gas" value={gas}></input>
-        </label>
-        <label>
-          LCD URL (UST)
-          <input type="text" name="lcdUrl" value={lcdUrl}></input>
-        </label>
-        <input type="submit" value="Save"></input>
+        <label className="config-label" htmlFor="seedPhrase">Mnuemonic Seed Phrase</label>
+        <input className="config-input" type="text" name="seedPhrase" placeholder={props.seedPhrase}></input>
+        <label className="config-label" htmlFor="targetAsset">Target Asset</label>
+        <select className="config-input config-select" name="targetAsset" placeholder="mETH">
+          <option value="MIR">MIR</option>
+          <option value="mMSFT">mMSFT</option>
+          <option value="mBTC">mBTC</option>
+          <option value="mAAPL">mAAPL</option>
+          <option value="mNFLX">mNFLX</option>
+          <option value="mAMC">mAMC</option>
+          <option value="mETH">mETH</option>
+          <option value="mAMZN">mAMZN</option>
+          <option value="mGOOGL">mGOOGL</option>
+          <option value="mVIXY">mVIXY</option>
+          <option value="mQQQ">mQQQ</option>
+          <option value="mBABA">mBABA</option>
+          <option value="mTSLA">mTSLA</option>
+          <option value="mCOIN">mCOIN</option>
+        </select>
+        <label className="config-label" htmlFor="checkInterval">Check Interval (Minutes)</label>
+        <input className="config-input" type="number" name="checkInterval" placeholder={props.checkInterval.toString()}></input>
+        <label className="config-label" htmlFor="contractExecDelay">Contract Exec Delay (Seconds)</label>
+        <input className="config-input" type="number" name="contractExecDelay" placeholder={props.contractExecDelay.toString()}></input>
+        <label className="config-label" htmlFor="coinType">COIN TYPE</label>
+        <input className="config-input" type="number" name="coinType" placeholder={props.coinType.toString()}></input>
+        <label className="config-label" htmlFor="gas">Gas Usage (UST)</label>
+        <input className="config-input" type="number" name="gas" placeholder={props.gas.toString()}></input>
+        <label className="config-label" htmlFor="lcdUrl">LCD URL (UST)</label>
+        <input className="config-input" type="text" name="lcdUrl" placeholder={props.lcdUrl}></input>
+        <input className="config-save" type="submit" value="Save"></input>
       </form>
     </div>
   )
 };
 
 export default ConfigPage;
-
-
-// MNEMONIC="forget cluster father know insect gospel firm spring anxiety capable struggle absent apart menu stand grass unknown deal cover key enough bottom mean outside"
-// TARGET_ASSET="MIR"
-
-
-// REWARD_CHECK_INTERVAL_MIN=10
-// CONTRACT_EXEC_DELAY_SEC=15
-// MNEMONIC_INDEX=0
-// COIN_TYPE=330
-// GAS_COST_USD=0.15
-// LCD_URL="https://lcd.terra.dev"

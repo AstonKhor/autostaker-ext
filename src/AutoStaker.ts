@@ -29,7 +29,7 @@ export default class AutoStaker {
     const lcd = new LCDClient({
       URL: config.lcdUrl || 'https://lcd.terra.dev',
       chainID: 'columbus-4',
-      gasPrices: new Coins({ uusd: config.gas || 0.15 }),
+      gasPrices: new Coins({ uusd: config.gas || 0.30 }),
       gasAdjustment: 1.2
     });
     
@@ -49,7 +49,7 @@ export default class AutoStaker {
     // Use static fee
     const tx = await this.wallet.createAndSignTx({
       msgs,
-      fee: new StdFee(150_000, { uusd: 30_000 })
+      fee: new StdFee(150_000, { uusd: 57_000 })
     });
     console.log(tx);
 
