@@ -16,32 +16,41 @@ const config = {
   lcdUrl: 'https://lcd.terra.dev',
 }
 const state = {
+  ready: false,
   autoStaker: undefined,
   currentStakerProcess: undefined,
   currentStakerProcessId: undefined,
 }
 
-function init() {
+async function init() {
   setupLocalState();
+  await initAutostaker();
   setupStorageListeners();
   setupMessageListeners();
+  state.ready = true;
 }
 
 function setupLocalState() {
-  chrome.storage.local.get(null, (storage) => {
-    for (let key in storage) {
-      if (config[key]) config[key] = storage[key];
-    }
+  return new Promise((resolve) => {
+    chrome.storage.local.get(null, (storage) => {
+      for (let key in storage) {
+        if (config[key]) config[key] = storage[key];
+      }
+      resolve(null);
+    });
   });
 }
 
 function setupStorageListeners() {
-  chrome.storage.onChanged.addListener(function (changes: Object) {
-    for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-      if (config.hasOwnProperty(key)) {
-        config[key] = newValue;
+  return new Promise((resolve) => {
+    chrome.storage.onChanged.addListener(function (changes: Object) {
+      for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+        if (config.hasOwnProperty(key)) {
+          config[key] = newValue;
+        }
       }
-    }
+      resolve(null);
+    });
   });
 }
 
@@ -57,10 +66,14 @@ function setupMessageListeners() {
   });
 }
 
+async function initAutostaker() {
+  state.autoStaker = new AutoStaker(config);
+  chrome.storage.local.set({ rewardsToClaim: await state.autoStaker.rewardsToClaim()});
+}
+
 // convert to web workers eventually
 function startAutoStakerProcess() {
   if (state.currentStakerProcess) return;
-  state.autoStaker = new AutoStaker(config);
   state.currentStakerProcess = () => {
     state.autoStaker.process();
   }

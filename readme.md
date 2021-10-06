@@ -1,29 +1,22 @@
-# Chrome Extension boilerplate created with React Typescript
+# Autostaker Browser Extension
 
-## Getting started
+Autostaker is a mirror protocol automatic re-staker chrome extension. Mirror protocol short pools typically require a manual collecting selling for 50/50 with UST and restaking. This extension simplifies all of those steps and lets you compound those gains with a single button!
 
-Create a project based on this boilerplate.
+The extension re-implements the standalone autostaker from [Autostaker by YunSuk Yeo](https://github.com/YunSuk-Yeo/autostaker) and makes it accesible to those whom don't know how to program.
 
-```
-$ npx degit https://github.com/sivertschou/react-typescript-chrome-extension-boilerplate.git#christmas <project-name>
-```
+## Screenshots
 
-Navigate to the project directory and install the dependencies.
+<img src="./docs/setupPage.png" width="250"/>
+<img src="./docs/autostakerPageOn.png" width="250"/>
+<img src="./docs/configPage.png" width="250"/>
 
-```
-$ npm install
-```
+## Building locally
 
-To build the extension, and rebuild it when the files are changed, run
+- Install [Node.js](https://nodejs.org) version 14
+    - If you are using [nvm](https://github.com/creationix/nvm#installation) (recommended) running `nvm use` will automatically choose the right node version for you.
+- Install dependencies: `npm install`
+- Build the project to the `./dist/` folder with `npm run build`.
 
-```
-$ npm start
-```
+## Contributing
 
-After the project has been built, a directory named `dist` has been created. You have to add this directory to your Chrome browser:
-
-1. Open Chrome.
-2. Navigate to `chrome://extensions`.
-3. Enable _Developer mode_.
-4. Click _Load unpacked_.
-5. Select the `dist` directory.
+The project is completely open source. Feel free to contribute!

@@ -28,7 +28,7 @@ export default class AutoStaker {
     
     const lcd = new LCDClient({
       URL: config.lcdUrl || 'https://lcd.terra.dev',
-      chainID: 'columbus-4',
+      chainID: 'columbus-5',
       gasPrices: new Coins({ uusd: config.gas || 0.30 }),
       gasAdjustment: 1.2
     });
