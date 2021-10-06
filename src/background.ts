@@ -6,7 +6,7 @@ import hotReload from './hotReload.js';
 hotReload();
 
 const config = {
-  seedPhrase: 'fatigue impulse fish father twist toe quit heart alcohol fresh eternal orphan orphan yard private front wall lawn toss fame despair hollow pumpkin fiscal',
+  seedPhrase: '',
   targetAsset: 'MIR',
   checkInterval: 60,
   contractExecDelay: 15,
