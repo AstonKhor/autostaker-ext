@@ -23,15 +23,5 @@
       "background.js"
     ],
     "persistent": false
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "*://*/*"
-      ],
-      "js": [
-        "content.js"
-      ]
-    }
-  ]
+  }
 }
