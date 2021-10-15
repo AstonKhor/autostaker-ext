@@ -9,6 +9,7 @@ interface MyState {
   gas: number,
   lcdUrl: string,
   stakerOn: boolean,
+  rewardsToClaim: number,
 }
 
 interface AppProps {}
@@ -22,6 +23,7 @@ interface AutostakerProps {
   stakerOn: boolean,
   toggleStakerOn: Function,
   changePage: Function,
+  rewardsToClaim: number,
 }
 
 interface ConfigProps {

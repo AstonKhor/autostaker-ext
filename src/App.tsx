@@ -19,6 +19,7 @@ class App extends React.Component <{}, MyState>{
       gas: 0.30,
       lcdUrl: 'https://lcd.terra.dev',
       stakerOn: false,
+      rewardsToClaim: 0,
     };
     this.changePage = this.changePage.bind(this);
     this.updateSeed = this.updateSeed.bind(this);
@@ -26,7 +27,7 @@ class App extends React.Component <{}, MyState>{
   }
 
   componentDidMount() {
-    chrome.storage.local.get([ 'seedPhrase', 'targetAsset', 'checkInterval', 'contractExecDelay', 'mnemonicIndex', 'coinType', 'gasUsage', 'lcdUrl', 'stakerOn' ], (storage: MyState) => {
+    chrome.storage.local.get([ 'seedPhrase', 'targetAsset', 'checkInterval', 'contractExecDelay', 'mnemonicIndex', 'coinType', 'gasUsage', 'lcdUrl', 'stakerOn', 'rewardsToClaim' ], (storage: MyState) => {
       if (typeof storage.seedPhrase === 'string' && storage.seedPhrase) storage.page = 'autostakerPage';
       this.setState(storage);
     });
@@ -41,7 +42,9 @@ class App extends React.Component <{}, MyState>{
   }
 
   updateSeed(seedPhrase) {
-    this.setState({ seedPhrase });
+    this.setState({ seedPhrase }), () => {
+      chrome.storage.local.set({ seedPhrase });
+    };
   }
   
   toggleStakerOn() {
@@ -98,6 +101,7 @@ class App extends React.Component <{}, MyState>{
             changePage={this.changePage}
             toggleStakerOn={this.toggleStakerOn}
             stakerOn={this.state.stakerOn}
+            rewardsToClaim={this.state.rewardsToClaim}
           /> }
         </div>
       </div>
