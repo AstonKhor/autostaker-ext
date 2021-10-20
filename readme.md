@@ -10,6 +10,17 @@ The extension re-implements the standalone autostaker from [Autostaker by YunSuk
 <img src="./docs/autostakerPageOn.png" width="250"/>
 <img src="./docs/configPage.png" width="250"/>
 
+## Running the Pre-built Extension
+
+*The extension only runs on chrome/chromium/brave browsers
+- Clone the repo (git clone https://github.com/AstonKhor/autostaker-ext)
+- Go to [chrome://extensions](chrome://extensions)
+- Toggle the "Developer mode" to On
+- Click "Load unpacked"
+- Navigate to and select the "extension" folder from the root of this repo
+- Start compounding those gains!
+
+
 ## Building locally
 
 - Install [Node.js](https://nodejs.org) version 14
