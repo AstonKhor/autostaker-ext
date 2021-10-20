@@ -33,15 +33,15 @@ function AutostakerPage(props:AutostakerProps) {
         <div className="stat-block">
           <div className="stat-title">Claimable Rewards</div>
           <div>
-            <span className="num-int">{props.rewardsToClaim.toFixed(0)}</span>
-            <span className="num-dec">{props.rewardsToClaim ? props.rewardsToClaim % 1 : ''} MIR</span>
+            <span className="num-int">{props.rewardsToClaim.toFixed(0) || 0}</span>
+            <span className="num-dec">{props.rewardsToClaim ? '.' + (props.rewardsToClaim % 1) : ''} MIR</span>
           </div>
         </div>
         <div className="stat-block">
           <div className="stat-title">Total Value(UST)</div>
           <div>
-            <span className="num-int">224,898.</span>
-            <span className="num-dec">61 UST</span>
+            <span className="num-int">{props.rewardsToClaim.toFixed(0) || '224,898'}</span>
+            <span className="num-dec">{props.rewardsToClaim ? '.' + (props.rewardsToClaim % 1) : '89'} UST</span>
           </div>
         </div>
       </div>

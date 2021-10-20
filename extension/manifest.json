@@ -1,0 +1,27 @@
+{
+  "name": "Autostaker for Terra",
+  "description": "Autostake your rewards on the mirror(terra) network",
+  "manifest_version": 2,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmAuhL71DpynVei1/EmsmIrUGcRnZbSnqMBaLsPbt6PrgAQeLu54ZKTRt3XJNvZh15sLMEJRG4vW/JLqmI4OQv/71HFDESuMBJgcHjX3ZSa7Rd/NBmW1X3MDLMRVpnMENK5oBRiSW/rm2FEys4IqYjED+5gI7tiEqHRfwBO0Z4J1XkuBGZ0X8gVJHksLKjiAFPyZkZ/FDND0yGXLjh3SCq1fhCUZG6mlbUdIwfTyQFs6wnKHkmH8adK97o/DA85AuDXrpDThpONVEo7nSINw2SzM6HOj1Nlqch1Tj8sJS5qJZd4ZjLm8T7DOMVHSKAG5nFLjxyCN0dgwXf98vPwoBRwIDAQAB",
+  "version": "1.0.0",
+  "permissions": [ "storage", "activeTab" ],
+  "icons": {
+     "128": "icon-128.png",
+     "16": "icon-32.png",
+     "48": "icon-32.png"
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "icon-32.png",
+      "48": "icon-32.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "Autostaker"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  }
+}
