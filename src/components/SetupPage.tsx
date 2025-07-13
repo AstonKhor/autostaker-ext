@@ -1,54 +1,194 @@
-import React from 'react';
+/**
+ * Setup Page Component
+ * Handles initial seed phrase configuration for the Autostaker extension
+ */
 
-function SetupPage(props:SetupProps) {
-  let seed = '';
-  function updateSeed(e) {
-    seed = e.target.value;
-  }
-  function checkSubmit() {
-    if (seed.split(' ').length !== 24) {
-      console.log(seed.split(' ').length);
-      let warn = document.querySelector('.caveat');
-      warn.id = 'caveat-warn';
-      warn.textContent = 'invalid seed phrase';
-      setTimeout(() => {
-        warn.removeAttribute('id');
-        warn.textContent = '*Seed phrase stored locally to sign transactions.';
-      }, 3500);
-      return;
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { SetupPageProps } from '../types';
+import { validateSeedPhrase } from '../utils/validation';
+import './SetupPage.css';
+
+const SetupPage: React.FC<SetupPageProps> = ({ onComplete }) => {
+  const [seedPhrase, setSeedPhrase] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [showSeedPhrase, setShowSeedPhrase] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * Focus input on mount
+   */
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  /**
+   * Handle seed phrase input change
+   */
+  const handleSeedPhraseChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setSeedPhrase(value);
+    
+    // Clear validation error when user types
+    if (validationError) {
+      setValidationError(null);
     }
-    // props.updateSeed();
-    props.changePage('autostakerPage');
-    props.updateSeed(seed);
-  }
+  }, [validationError]);
+
+  /**
+   * Validate and submit seed phrase
+   */
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setIsValidating(true);
+    setValidationError(null);
+
+    try {
+      // Validate seed phrase
+      const validation = validateSeedPhrase(seedPhrase);
+      
+      if (!validation.isValid) {
+        setValidationError(validation.errors[0]);
+        return;
+      }
+
+      // Simulate async validation (e.g., checking if seed phrase is valid on blockchain)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // If validation passes, complete setup
+      onComplete(seedPhrase.trim());
+    } catch (error) {
+      setValidationError('An unexpected error occurred. Please try again.');
+      console.error('Setup error:', error);
+    } finally {
+      setIsValidating(false);
+    }
+  }, [seedPhrase, onComplete]);
+
+  /**
+   * Toggle seed phrase visibility
+   */
+  const toggleSeedPhraseVisibility = useCallback(() => {
+    setShowSeedPhrase(prev => !prev);
+  }, []);
+
+  /**
+   * Handle paste event to clean up seed phrase
+   */
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const cleanedText = pastedText.trim().replace(/\s+/g, ' ');
+    setSeedPhrase(cleanedText);
+  }, []);
 
   return (
-    <div id="setup-page">
-      <div id="unlock-page-image"></div>
-      <div className="unlock-page-title">
-        Welcome Back!
-      </div>
-      <div className="unlock-page-subtitle">
-        Automated Yield Farming Awaits
-      </div>
-      <label className="unlock-page-form">
-        <div className="form__group field">
-          <input type="input" className="form__field" placeholder="Name" name="seed" id='seed' onChange={updateSeed}/>
-          <label htmlFor="seed" className="form__label">Seed Phrase</label>
-          <div className="caveat unlock-page-subtext">
-            *Seed phrase stored locally to sign transactions.
+    <div className="setup-page">
+      <div className="setup-page__content">
+        <div className="setup-page__logo" />
+        
+        <h1 className="setup-page__title">
+          Welcome to Autostaker
+        </h1>
+        
+        <p className="setup-page__subtitle">
+          Automated yield farming for Terra ecosystem
+        </p>
+
+        <form className="setup-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="seed-phrase" className="form-label">
+              Enter your seed phrase
+            </label>
+            
+            <div className="input-wrapper">
+              <textarea
+                ref={inputRef}
+                id="seed-phrase"
+                className={`form-textarea ${validationError ? 'error' : ''}`}
+                value={seedPhrase}
+                onChange={handleSeedPhraseChange}
+                onPaste={handlePaste}
+                placeholder="Enter your 24-word seed phrase"
+                rows={4}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                disabled={isValidating}
+                style={{ 
+                  fontFamily: 'monospace',
+                  WebkitTextSecurity: showSeedPhrase ? 'none' : 'disc'
+                } as React.CSSProperties}
+              />
+              
+              <button
+                type="button"
+                className="visibility-toggle"
+                onClick={toggleSeedPhraseVisibility}
+                aria-label={showSeedPhrase ? 'Hide seed phrase' : 'Show seed phrase'}
+              >
+                {showSeedPhrase ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            {validationError && (
+              <div className="form-error" role="alert">
+                {validationError}
+              </div>
+            )}
+
+            <div className="form-hint">
+              Your seed phrase is stored locally and used to sign transactions.
+              It is never sent to any server.
+            </div>
           </div>
-          <button type="submit" className="unlock-page-form-submit" onClick={checkSubmit}>UNLOCK</button>
+
+          <button
+            type="submit"
+            className="form-submit"
+            disabled={isValidating || !seedPhrase.trim()}
+          >
+            {isValidating ? (
+              <>
+                <span className="spinner" />
+                Validating...
+              </>
+            ) : (
+              'Unlock Wallet'
+            )}
+          </button>
+        </form>
+
+        <div className="setup-page__footer">
+          <p className="footer-text">
+            This project is{' '}
+            <a 
+              href="https://github.com/autostaker/autostaker-ext" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="link"
+            >
+              open source
+            </a>
+          </p>
+          
+          <p className="footer-text">
+            Need help?{' '}
+            <a 
+              href="https://docs.autostaker.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="link"
+            >
+              View Documentation
+            </a>
+          </p>
         </div>
-      </label>
-      <div className="caveat">
-      This project is <a href="https://www.astonk.com">open source</a>.
-      </div>
-      <div className="caveat unlock-page-subtext">
-        Need help? Contact <a href="https://www.astonk.com">Autostaker Support</a>
       </div>
     </div>
-  )
+  );
 };
 
 export default SetupPage;

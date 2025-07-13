@@ -1,79 +1,64 @@
-const path = require('path');
-const CopyPlugin = require('copy-webpack-plugin');
-console.log(process.env.fullBuild);
-const config = {
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+module.exports = {
+  mode: isProduction ? 'production' : 'development',
   entry: {
-    popup: path.join(__dirname, 'src/popup.tsx'),
-    background: path.join(__dirname, 'src/background.ts'),
+    popup: path.resolve("src/popup.tsx"),
+    background: path.resolve("src/background.ts"),
   },
-  output: { 
-    path: path.join(__dirname, process.env.fullBuild ? 'extension' : 'dist'), 
-    filename: '[name].js', 
-    libraryTarget: 'umd'
-  },
-  devtool: 'source-map',
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
-        use: 'babel-loader',
+        test: /\.tsx?$/,
+        use: "ts-loader",
         exclude: /node_modules/,
       },
       {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
-        exclude: /\.module\.css$/,
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
       },
       {
-        test: /\.ts(x)?$/,
-        loader: 'ts-loader',
-        exclude: /node_modules/,
-      },
-      {
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              importLoaders: 1,
-              modules: true,
-            },
-          },
-        ],
-        include: /\.module\.css$/,
-      },
-      {
-        test: /\.svg$/,
-        use: 'file-loader',
-      },
-      {
-        test: /\.png$/,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              mimetype: 'image/png',
-            },
-          },
-        ],
+        test: /\.(jpg|jpeg|png|woff|woff2|eot|ttf|svg)$/,
+        loader: "url-loader",
+        options: {
+          limit: 8192,
+        },
       },
     ],
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.tsx', '.ts'],
-    alias: {
-      'react-dom': '@hot-loader/react-dom',
-    },
+    extensions: [".tsx", ".ts", ".js"],
   },
-  devServer: {
-    contentBase: './dist',
+  output: {
+    filename: "[name].js",
+    path: path.resolve(__dirname, "extension"),
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: 'public', to: '.' }],
+      patterns: [
+        { from: "public", to: "." },
+      ],
     }),
   ],
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          priority: 10,
+        },
+      },
+    },
+  },
+  performance: {
+    hints: isProduction ? 'warning' : false,
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000,
+  },
+  devtool: isProduction ? 'source-map' : 'inline-source-map',
 };
-
-module.exports = config;

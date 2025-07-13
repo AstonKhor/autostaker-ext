@@ -1,112 +1,355 @@
-import React from 'react';
-import SetupPage from './components/SetupPage';
-import ConfigPage from './components/ConfigPage';
-import AutostakerPage from './components/AutostakerPage';
-import "./App.css";
+/**
+ * Main Application Component
+ * Manages the overall state and navigation of the Autostaker extension
+ */
 
-class App extends React.Component <{}, MyState>{
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { SetupPage, ConfigPage, AutostakerPage } from './components';
+import { 
+  AppState, 
+  PageType, 
+  TargetAsset, 
+  Network, 
+  MessageType, 
+  ChromeMessage, 
+  AutostakerConfig 
+} from './types';
+import { 
+  StorageService, 
+  getMessagingService, 
+  logger 
+} from './services';
+import { useErrorBoundary } from './hooks';
+import { STORAGE_KEYS } from './constants';
+import './App.css';
 
-  constructor(props:AppProps) {
-    super(props);
-    this.state = {
-      page: 'setupPage',
-      seedPhrase: '',
-      targetAsset: 'mETH',
-      checkInterval: 60,
-      contractExecDelay: 15,
-      mnemonicIndex: 0,
-      coinType: 330,
-      gas: 0.30,
-      lcdUrl: 'https://lcd.terra.dev',
-      stakerOn: false,
-      rewardsToClaim: 0,
-    };
-    this.changePage = this.changePage.bind(this);
-    this.updateSeed = this.updateSeed.bind(this);
-    this.toggleStakerOn = this.toggleStakerOn.bind(this);
-  }
+// Default configuration values
+const DEFAULT_CONFIG: AutostakerConfig = {
+  seedPhrase: '',
+  targetAsset: TargetAsset.mETH,
+  checkIntervalMinutes: 60,
+  contractExecDelaySeconds: 15,
+  mnemonicIndex: 0,
+  coinType: 330,
+  gasPrice: 0.30,
+  lcdUrl: 'https://lcd.terra.dev',
+  network: Network.MAINNET
+};
 
-  componentDidMount() {
-    chrome.storage.local.get([ 'seedPhrase', 'targetAsset', 'checkInterval', 'contractExecDelay', 'mnemonicIndex', 'coinType', 'gasUsage', 'lcdUrl', 'stakerOn', 'rewardsToClaim' ], (storage: MyState) => {
-      if (typeof storage.seedPhrase === 'string' && storage.seedPhrase) storage.page = 'autostakerPage';
-      this.setState(storage);
-    });
-  }
+// Default runtime state
+const DEFAULT_RUNTIME = {
+  isStakerActive: false,
+  rewardsToClaim: 0,
+  totalValueUst: 0,
+  lastCheckTime: null,
+  nextCheckTime: null,
+  error: null
+};
 
-  async componentDidUpdate() {
-    return new Promise((resolve) => {
-      chrome.storage.local.set(this.state, () => {
-        resolve(null);
-      });
-    });
-  }
+// Initialize logger for this module
+const log = logger.child('App');
 
-  updateSeed(seedPhrase) {
-    this.setState({ seedPhrase }), () => {
-      chrome.storage.local.set({ seedPhrase });
-    };
-  }
-  
-  toggleStakerOn() {
-    this.setState({ stakerOn: !this.state.stakerOn }, () => {
-      // send message to bg to start or stop autostaker
-      if (this.state.stakerOn) {
-        chrome.runtime.sendMessage({ type: 'autostaker on' });
-      } else {
-        chrome.runtime.sendMessage({ type: 'autostaker off' });
+/**
+ * Main Application Component
+ */
+const App: React.FC = () => {
+  const [appState, setAppState] = useState<AppState>({
+    currentPage: PageType.SETUP,
+    config: DEFAULT_CONFIG,
+    runtime: DEFAULT_RUNTIME
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const { error, resetError } = useErrorBoundary();
+
+  const storageService = useMemo(() => new StorageService('local'), []);
+  const messagingService = useMemo(() => getMessagingService(), []);
+
+  /**
+   * Load saved state from storage
+   */
+  useEffect(() => {
+    const loadSavedState = async () => {
+      try {
+        log.debug('Loading saved state from storage');
+        
+        const [savedConfig, savedRuntime, savedPage] = await Promise.all([
+          storageService.get<AutostakerConfig>(STORAGE_KEYS.config),
+          storageService.get<typeof DEFAULT_RUNTIME>(STORAGE_KEYS.runtime),
+          storageService.get<PageType>(STORAGE_KEYS.currentPage)
+        ]);
+
+        setAppState((prevState: AppState) => {
+          const newState = {
+            ...prevState,
+            config: savedConfig ? { ...DEFAULT_CONFIG, ...savedConfig } : DEFAULT_CONFIG,
+            runtime: savedRuntime ? { ...DEFAULT_RUNTIME, ...savedRuntime } : DEFAULT_RUNTIME,
+            currentPage: savedConfig?.seedPhrase ? (savedPage || PageType.AUTOSTAKER) : PageType.SETUP
+          };
+          
+          log.info('State loaded successfully', { 
+            hasConfig: !!savedConfig, 
+            currentPage: newState.currentPage 
+          });
+          
+          return newState;
+        });
+      } catch (error) {
+        log.error('Failed to load saved state', error);
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    loadSavedState();
+  }, [storageService]);
+
+  /**
+   * Save state to storage whenever it changes
+   */
+  useEffect(() => {
+    if (isLoading) return;
+
+    const saveState = async () => {
+      try {
+        await Promise.all([
+          storageService.set(STORAGE_KEYS.config, appState.config),
+          storageService.set(STORAGE_KEYS.runtime, appState.runtime),
+          storageService.set(STORAGE_KEYS.currentPage, appState.currentPage)
+        ]);
+        
+        log.debug('State saved to storage');
+      } catch (error) {
+        log.error('Failed to save state', error);
+      }
+    };
+
+    saveState();
+  }, [appState, storageService, isLoading]);
+
+  /**
+   * Listen for messages from background script
+   */
+  useEffect(() => {
+    const handleMessage = (message: ChromeMessage) => {
+      log.debug('Received message from background', { type: message.type });
+      
+      switch (message.type) {
+        case MessageType.UPDATE_REWARDS:
+          if ('payload' in message && typeof message.payload === 'object') {
+            const payload = message.payload as { rewardsToClaim: number; totalValueUst: number };
+            setAppState((prev: AppState) => ({
+              ...prev,
+              runtime: {
+                ...prev.runtime,
+                rewardsToClaim: payload.rewardsToClaim,
+                totalValueUst: payload.totalValueUst
+              }
+            }));
+            
+            log.info('Rewards updated', payload);
+          }
+          break;
+
+        case MessageType.ERROR:
+          if ('payload' in message) {
+            const errorPayload = message.payload as any;
+            setAppState((prev: AppState) => ({
+              ...prev,
+              runtime: {
+                ...prev.runtime,
+                error: errorPayload
+              }
+            }));
+            
+            log.error('Error received from background', errorPayload);
+          }
+          break;
+          
+        default:
+          log.warn('Unknown message type received', { type: message.type });
+      }
+    };
+
+    messagingService.onMessage(handleMessage);
+    return () => messagingService.offMessage(handleMessage);
+  }, [messagingService]);
+
+  /**
+   * Handle seed phrase setup completion
+   */
+  const handleSetupComplete = useCallback((seedPhrase: string) => {
+    log.info('Setup completed');
+    
+    setAppState((prev: AppState) => ({
+      ...prev,
+      config: { ...prev.config, seedPhrase },
+      currentPage: PageType.AUTOSTAKER
+    }));
+  }, []);
+
+  /**
+   * Handle configuration updates
+   */
+  const handleConfigUpdate = useCallback((updates: Partial<AutostakerConfig>) => {
+    log.info('Configuration updated', updates);
+    
+    setAppState((prev: AppState) => ({
+      ...prev,
+      config: { ...prev.config, ...updates } as AutostakerConfig
+    }));
+  }, []);
+
+  /**
+   * Handle page navigation
+   */
+  const handleNavigate = useCallback((page: PageType) => {
+    log.debug('Navigating to page', { page });
+    
+    setAppState((prev: AppState) => ({ ...prev, currentPage: page }));
+    if (error) resetError();
+  }, [error, resetError]);
+
+  /**
+   * Toggle autostaker on/off
+   */
+  const handleToggleStaker = useCallback(() => {
+    const newState = !appState.runtime.isStakerActive;
+    
+    log.info(`Autostaker ${newState ? 'started' : 'stopped'}`);
+    
+    setAppState((prev: AppState) => ({
+      ...prev,
+      runtime: {
+        ...prev.runtime,
+        isStakerActive: newState,
+        lastCheckTime: newState ? Date.now() : prev.runtime.lastCheckTime,
+        nextCheckTime: newState 
+          ? Date.now() + (prev.config.checkIntervalMinutes * 60 * 1000)
+          : null
+      }
+    }));
+
+    // Send message to background script
+    messagingService.sendMessage({
+      type: newState ? MessageType.AUTOSTAKER_ON : MessageType.AUTOSTAKER_OFF
     });
-  }
+  }, [appState.runtime.isStakerActive, messagingService]);
 
-  changePage(page:string) {
-    this.setState({ page: page });
-  }
-
-  render() {
+  // Show loading state
+  if (isLoading) {
     return (
-      <div id='app'>
-        <div id='header'>
-          {/* icon */}
-          <div className="small-icon" onClick={() => { this.changePage('autostakerPage'); }}></div>
-          <div>
-            <span className="dot"></span>
-            <select name="networks" id="networks">
-              <option value="Mainnet">Mainnet</option>
-              <option value="Testnet">Testnet</option>
-              <option value="Bombay">Bombay</option>
-              <option value="Localterra">Localterra</option>
-              <option value="Add a network">Add a network</option>
-            </select>
+      <div id="app" className="app app--loading">
+        <div className="app__spinner" />
+      </div>
+    );
+  }
 
-          </div>
-          {/* settings hamburger */}
-        </div>
-        <div id='content'>
-          { this.state.page === 'setupPage' && <SetupPage 
-            changePage={this.changePage}
-            updateSeed={this.updateSeed}
-          /> }
-          { this.state.page === 'configPage' && <ConfigPage 
-            onSeedUpdate={this.updateSeed} 
-            seedPhrase={this.state.seedPhrase} 
-            targetAsset= {this.state.targetAsset} 
-            checkInterval={this.state.checkInterval} 
-            contractExecDelay={this.state.contractExecDelay}
-            mnemonicIndex={this.state.mnemonicIndex}
-            coinType={this.state.coinType}
-            gas={this.state.gas}
-            lcdUrl={this.state.lcdUrl}
-          /> }
-          { this.state.page === 'autostakerPage' && <AutostakerPage 
-            changePage={this.changePage}
-            toggleStakerOn={this.toggleStakerOn}
-            stakerOn={this.state.stakerOn}
-            rewardsToClaim={this.state.rewardsToClaim}
-          /> }
+  // Show error state
+  if (error) {
+    return (
+      <div id="app" className="app app--error">
+        <div className="app__error-container">
+          <h2 className="app__error-title">Something went wrong</h2>
+          <p className="app__error-message">{error.message}</p>
+          <button className="app__error-button" onClick={resetError}>
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
+
+  return (
+    <div id="app" className="app">
+      <Header 
+        currentNetwork={appState.config.network}
+        onNavigateHome={() => handleNavigate(PageType.AUTOSTAKER)}
+      />
+      
+      <main className="app__content">
+        {appState.currentPage === PageType.SETUP && (
+          <SetupPage onComplete={handleSetupComplete} />
+        )}
+        
+        {appState.currentPage === PageType.CONFIG && (
+          <ConfigPage
+            config={appState.config}
+            onConfigUpdate={handleConfigUpdate}
+            onNavigate={handleNavigate}
+          />
+        )}
+        
+        {appState.currentPage === PageType.AUTOSTAKER && (
+          <AutostakerPage
+            runtime={appState.runtime}
+            config={{ targetAsset: appState.config.targetAsset }}
+            onToggleStaker={handleToggleStaker}
+            onNavigate={handleNavigate}
+          />
+        )}
+      </main>
+    </div>
+  );
+};
+
+/**
+ * Header Component
+ */
+interface HeaderProps {
+  currentNetwork: Network;
+  onNavigateHome: () => void;
 }
+
+const Header: React.FC<HeaderProps> = ({ currentNetwork, onNavigateHome }) => {
+  const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
+
+  const networkOptions = [
+    { value: Network.MAINNET, label: 'Mainnet' },
+    { value: Network.TESTNET, label: 'Testnet' },
+    { value: Network.BOMBAY, label: 'Bombay' },
+    { value: Network.LOCALTERRA, label: 'Localterra' }
+  ];
+
+  return (
+    <header className="header">
+      <div className="header__logo" onClick={onNavigateHome}>
+        <div className="header__icon" />
+      </div>
+      
+      <div className="header__network-selector">
+        <span className="header__network-indicator" />
+        <button 
+          className="header__network-toggle"
+          onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
+          aria-label="Select network"
+          aria-expanded={isNetworkDropdownOpen}
+        >
+          {networkOptions.find(n => n.value === currentNetwork)?.label || 'Select Network'}
+        </button>
+        
+        {isNetworkDropdownOpen && (
+          <div className="header__network-dropdown">
+            {networkOptions.map(option => (
+              <button
+                key={option.value}
+                className={`header__network-option ${
+                  option.value === currentNetwork ? 'header__network-option--active' : ''
+                }`}
+                onClick={() => {
+                  log.info('Network selection changed', { network: option.value });
+                  // Network switching would be implemented here
+                  setIsNetworkDropdownOpen(false);
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
 
 export default App;

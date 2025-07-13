@@ -1,0 +1,200 @@
+@import '../styles/variables.css';
+
+.config-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background);
+}
+
+.config-page__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.back-button {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-base);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.back-button:hover {
+  color: var(--color-text-primary);
+  background: var(--color-gray-100);
+}
+
+.page-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.config-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.form-error-banner {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-4);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.form-field--error .form-input,
+.form-field--error .form-select {
+  border-color: var(--color-danger);
+}
+
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.required-mark {
+  color: var(--color-danger);
+}
+
+.input-with-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: var(--spacing-3);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-base);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+  background: var(--color-gray-100);
+  cursor: not-allowed;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: var(--spacing-3);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  transition: opacity var(--transition-base);
+}
+
+.toggle-visibility:hover {
+  opacity: 0.7;
+}
+
+.form-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.form-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  padding-top: var(--spacing-4);
+  margin-top: auto;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.button {
+  padding: var(--spacing-3) var(--spacing-6);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.button--primary {
+  color: var(--color-white);
+  background: var(--color-primary);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.button--primary:active:not(:disabled) {
+  background: var(--color-primary-active);
+}
+
+.button--secondary {
+  color: var(--color-text-primary);
+  background: var(--color-gray-200);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: var(--color-gray-300);
+}
+
+.button--secondary:active:not(:disabled) {
+  background: var(--color-gray-400);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+} 
